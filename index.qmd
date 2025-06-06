@@ -965,7 +965,7 @@ Computing KNN (Algorithm Steps)
 
 Distance Metrics used in KNN
 
--	**Euclidean** Distance (default): Limited to real-valued vectors
+-	**Euclidean** Distance (default): Limited to real-valued vectors. It calculates the **straight-line distance**
 
 -	**Manhattan** Distance: Measures **absolute value** between two points.
 
@@ -1017,8 +1017,556 @@ Disadvantages
 Based on log-odds or **logit function**, which models the probability of the outcome being a particular class
 
 The logistic regression equation is:
+$$logit(p) = \log\left(\frac{p}{1-p}\right) = W^T X + b$$
+where:
+- $p$ is the probability of the positive class.
+- $W$ is the weight vector (model parameters).
+- $X$ is the input feature vector.
+- $b$ is the bias term (intercept).
+- The logit function transforms the probability into a linear combination of the input features.
+- The output of the logit function is then passed through the **sigmoid function** to obtain the predicted probability:
+$$p = \sigma(W^T X + b) = \frac{1}{1 + e^{-(W^T X + b)}}$$
+
+- The sigmoid function maps the output of the logit function to a probability between 0 and 1.
+
+- The loss function for logistic regression is typically the **binary cross-entropy loss**:
+$$L(W, b) = -\frac{1}{n} \sum_{i=1}^{n} \left[y_i \log(p_i) + (1 - y_i) \log(1 - p_i)\right]$$
+where:
+- $n$ is the number of samples.
+- $y_i$ is the actual target value for sample $i$ (0 or 1).
+- $p_i$ is the predicted probability for sample $i$.  
+
+- The optimization algorithm used to minimize the loss function is usually **gradient descent (GD)**. The update rule for the weights and bias is:
+$$W \leftarrow W - \eta \nabla L(W, b)$$
+$$b \leftarrow b - \eta \frac{\partial L(W, b)}{\partial b}$$ 
+where:
+- $\eta$ is the learning rate.
+- $\nabla L(W, b)$ is the gradient of the loss function with respect to the weights.
+- $\frac{\partial L(W, b)}{\partial b}$ is the gradient of the loss function with respect to the bias.
+- The gradients are computed using backpropagation, which applies the chain rule to compute the gradients efficiently.
+
+**Multinomial logistic regression:** Dependent variable has three or more possible outcomes but no specified order.
+
+**Ordinal Logistic Regression** is used when the dependent variable has ordered categories (e.g., low, medium, high). While the classes are categorical, they have an inherent order.
+
+- Eg Predicting customer satisfaction on a scale (1 = Poor, 2 = Fair, 3 = Good, 4 = Excellent).
+
+Logistic regression with **many features** where some might not contribute to the model (**Lasso** can help select important features).
+
+When the model might be **overfitting** the training data (**Ridge regularization** can help generalize better).
+
+# Lecture 5 
+
+## PCA
+Principal Component Analysis (PCA) is an **unsupervised non-parametric dimensionality reduction** technique.
+
+It is a technique that **transforms high-dimensional** data into a **lower-dimensional space** while **preserving as much variance as possible**.
+
+It is widely used for feature extraction, visualization, and noise reduction.
+
+Why use PCA?
+
+**Reduces dimensionality**: helps with overfitting and computation efficiency
+
+**Removes noise**: PCA can help filter out noise from the data by focusing on the most significant components
+
+Steps of PCA
+
+1. **Standardize the data**: Center the data by subtracting the mean and scaling to unit variance.
+   $$ X' = \frac{X - \mu}{\sigma} $$
+   where $X$ is the original data, $\mu$ is the mean, and $\sigma$ is the standard deviation.
+   
+   - This step ensures that all features contribute equally to the PCA transformation, especially when they are on different scales. Can use `StandardScaler` from `sklearn.preprocessing` to standardize the data.
+
+2. **Compute the covariance matrix**: Calculate the covariance matrix of the standardized data
+   - The covariance matrix captures the relationships between different features in the data. Can use `np.cov` to compute the covariance matrix.
+
+3. **Compute the eigenvalues and eigenvectors**: Calculate the eigenvalues and eigenvectors of the covariance matrix
+   - **Eigenvalues** represent the amount of **variance explained by each principal component**
+   - **Eigenvectors** represent the **direction** of the principal components.
+   - Can use `np.linalg.eig` to compute eigenvalues and eigenvectors.
+
+4. **Select the top k eigenvectors**: Choose the top k eigenvectors *corresponding to the largest eigenvalues*
+   - These eigenvectors form the new feature space, where k is the desired number of dimensions.
+   - Can use `np.argsort` to sort eigenvalues and select the top k eigenvectors.
+
+5. **Project the data**: Project the original data onto the new feature space using the selected eigenvectors
+   - Can use the dot product to project the data: $X_{proj} = X' W_{top}$, where $W_{top}$ contains the top k eigenvectors.
+
+Use explained variance ratio — typically retain enough to explain 90–95% of variance.
+
+Example in Python retaining k components that explain 90% variance:
+
+```python
+import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+# Standardize the data
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)  # X is the original data
+
+# Initialize PCA
+pca = PCA()
+X_pca = pca.fit_transform(X_scaled)
+# Calculate cumulative explained variance ratio
+explained_variance = pca.explained_variance_ratio_
+cumulative_variance = np.cumsum(explained_variance)
+
+# Find the number of components that explain 90% variance
+var_threshold = 0.90
+k = np.argmax(cumulative_variance >= var_threshold) + 1  # +1 because index starts at 0
+print(f"Number of components to retain 90% variance: {k}")
+```
+When to Use PCA?
+
+- KNN, K-Means, SVM, GaussianNB (**distance-sensitive**)
+  
+- When you have high-dimensional data (e.g., images, text) and want to reduce dimensionality while preserving variance.
+  
+- Logistic Regression, Linear Regression (when features are highly correlated, PCA can help **reduce multicollinearity**).
+
+- Neural Networks (to reduce input dimensionality and improve training efficiency).
+
+When Not to Use PCA?
+
+- Tree-based models (handle high dimensions well)
+    - Models such as **Decision Trees, Random Forests, and Gradient Boosting** do not require PCA since they can handle high-dimensional data without dimensionality reduction.
+  
+- Models with Sparse Data
+    -   Lasso Regression: Already performs feature selection by shrinking coefficients.
+    -   **Text-Based Models** (e.g., NLP with TF-IDF, BERT, Word2Vec): PCA may discard useful information from text embeddings.
+
+Types of PCA
+
+- **Randomized PCA** – faster, less memory efficient (whole training set needs to be stored in memory)
+
+- **Incremental PCA** – processes data in batches, useful for large datasets that do not fit in memory
+  
+- **Kernel PCA** – applies kernel trick to capture **non-linear relationships** in data. Useful when the data is not linearly separable in its original space but can be transformed into a higher-dimensional space where it becomes linearly separable.
+
+## Singular Value Decomposition (SVD)
+
+Definition: A **matrix factorization techniqu** that transforms correlated variables into a set of uncorrelated variables.
+
+Applications:
+- Dimensionality Reduction
+  
+- Latent Semantic Analysis (LSA): Reduces dimensions of term-document matrices to uncover latent relationships in text.
+  
+- Image Compression: Retains only the largest singular values, significantly reducing storage while preserving image quality.
+  
+- Limitation: Computationally expensive for large matrices.
+
+## Decision Trees
+Decision Trees are a type of **supervised learning algorithm** used for both classification and regression tasks. 
+
+They work by recursively **splitting the data into subsets based on feature values**, creating a tree-like structure where:
+
+- **Node** represents a feature
+- **Branch** represents a decision rule 
+- **Leaf Node** represents an outcome (class label or predicted value).
+
+Metrics for Best Split:
+
+- **Gini Impurity**: 
+    - Measures the **impurity of a node**.
+    - Lower Gini impurity indicates a better split.
+    - Works well for **classification tasks on categorical data**.
+    - Does NOT work well with continuous data.
+    - impurity means: a measure of how mixed the classes are in a node.
+
+- **Cross Entropy** (Information Gain):
+    - Measures the **amount of information gained** from splitting the data based on a feature.
+    - Measures the difference between two probability distributions: the true distribution (actual labels) and the predicted distribution (model outputs).
+    - Lower cross-entropy indicates a better fit between the predicted and true distributions.
+    - Works well for **classification tasks**.
+    - Can be used with both categorical and continuous data.
+
+**Recursive Process:** Splits continue until stopping criteria are met.
+
+**Stopping criteria** can include:
+  - Maximum tree depth
+  - Minimum number of samples per leaf node
+  - Minimum impurity decrease
+  
+Advantages of Decision Trees:
+
+- Easy to interpret
+- No need for feature scaling or normalization (unlike KNN or SVM)
+- Captures non-linear relationships 
+
+Disadvantages of Decision Trees:
+
+- Prone to overfitting (especially with deep trees)
+- Sensitive to noise in the data
+- Can be biased towards features with more levels (categorical variables with many unique values)
 
 
+Hyperparameters of Decision Trees:
+
+- **max_depth**: Maximum depth of the tree (controls overfitting).
+- **min_samples_split**: Minimum number of samples required to split an internal node (controls overfitting).
+- **min_samples_leaf**: Minimum number of samples required to be at a leaf node (controls overfitting).
+- **max_features**: Maximum number of features to consider when looking for the best split (controls overfitting).
+- **criterion**: The function to measure the quality of a split (e.g., "gini" for Gini impurity, "entropy" for information gain).
+- **splitter**: The strategy used to choose the split at each node (e.g., "best" or "random").
+
+## Ensemble Learning
+Ensemble learning is a machine learning technique that **combines multiple models** to improve overall performance. It leverages the strengths of individual models while mitigating their weaknesses.
+
+Work best when the predictors are as independent from each other. Diverse models correct each other’s errors.
+
+Goal: increase robustness and generalization of predictions.
+
+Types of Ensemble Learning:
+
+**Bagging (Bootstrap Aggregating)**:
+
+  - Training **multiple instances of the same model** on **different subsets** (using bootstrap sampling with replacement) of the data and combining their predictions to produce a result.
+  - Reduces variance and helps prevent overfitting.
+  - Example: Random Forests, which use decision trees as base learners.
+  - For **regression**, the final prediction is the **average** of all predictions from individual models.
+  - For **classification**, the final prediction is the **majority vote** from all predictions from individual models.
+
+**Boosting**:
+
+  - Training multiple instances of the same model **sequentially**, where each new model focuses on **correcting the errors made by the previous models**.
+  - Misclassified points get more weight.
+  - Final prediction is a weighted sum or vote.
+  - Example: AdaBoost, Gradient Boosting, XGBoost, LightGBM.
+  - Advantage: Reduces bias and improves accuracy.
+  - Disadvantage: Risk of overfitting with too many iterations and computationally expensive due to sequential learning.
+
+## Gradient Boosting
+Gradient Boosting is a powerful **ensemble learning technique** that builds models **sequentially**, where each new model attempts to correct the errors made by the previous models. It is particularly effective for both regression and classification tasks.
+
+It combines gardient descent with boosting to create a strong predictive model.
+
+Steps:
+
+1. Fit inital model
+2. Compute residuals (errors) of the initial model
+3. Fit a new model to the residuals
+4. Update the initial model by adding the new model's predictions scaled by a learning rate
+5. Repeat steps 2-4 for a specified number of iterations or until convergence.
+
+**Gradient**: A vector that shows the **direction** and **steepness** of the **slope of a loss function** with respect to the model’s parameters (e.g. weights)
+  -	We don’t manually compute gradients with libraries like Scikit-learn (it’s hidden under the hood)
+
+**Learning Rate**: A hyperparameter that controls **how much the model is updated at each iteration.**
+   - A small number (e.g., 0.1) that scales how big a step you take when updating the model based on the gradient. 
+   - Too low → slow convergence
+   - Too high → overshooting the optimal solution.
+
+**XGBoost:** A highly optimized and efficient implementation of gradient boosting that performs well in competitions and real-world tasks.
+   - Log Loss (Cross-Entropy Loss): Penalizes confident wrong predictions; often used in boosting algorithms like XGBoost.
+
+## Random Forests
+Random Forests is an **ensemble learning** method that combines **multiple decision trees** to improve predictive performance and reduce overfitting.
+
+It is widely used for both classification and regression tasks.
+
+It works by training multiple decision trees on different subsets **(bagging)** of the data and averaging their predictions (for regression) or taking a majority vote (for classification).
+
+Process:
+
+1. **Bootstrap Sampling**: Randomly sample the training data with replacement to create multiple subsets (bootstrapped datasets).
+   
+2. **Feature Randomness**: For each tree, randomly select a subset of features to consider for splitting at each node. This helps reduce correlation between trees and improves generalization.
+   
+3. **Train trees**: Train a decision tree on each bootstrapped dataset using the selected features.
+   
+4. **Aggregate Predictions**: For regression, average the predictions of all trees; for classification, take the majority vote.
+
+Advantages of Random Forests:
+
+- **Robustness**: Less prone to overfitting compared to individual decision trees due to averaging.
+  
+- **Feature Importance**: Provides insights into feature importance, helping identify which features contribute most to the model's predictions. 
+  
+- **Handles Missing Values**: Can handle missing values in the dataset without requiring imputation.
+  
+- **Scalability**: Can handle large datasets and high-dimensional feature spaces efficiently.
+
+Disadvantages of Random Forests:
+
+- **Interpretability**: Less interpretable than individual decision trees, making it harder to understand the model's decisions.
+  
+- **Computationally Intensive**: Training multiple trees can be computationally expensive, especially for large datasets.
+
+
+# SVM
+Support Vector Machines (SVM) is a powerful **supervised learning algorithm** used for both classification (primarily) and regression tasks.
+
+It is particularly effective for high-dimensional data and can handle non-linear relationships using kernel functions(such as radial basis function (RBF))
+
+SVM works by finding the **optimal hyperplane** that separates different classes in the feature space.
+
+**Maximizes the margin** (distance between the boundary and the nearest data points from each class) to improve generalization.
+
+Common Kernels:
+
+1. **Linear** – for linearly separable data.
+2. **Polynomial** – adds polynomial combinations of features.
+3. **Radial Basis Function (RBF)** – default in scikit-learn; good for complex, non-linear data.
+
+**Parameters:**
+- **C**: Regularization parameter that **controls the trade-off** between maximizing the margin and minimizing classification errors.
+  - Smaller C allows for a wider margin but may misclassify some points
+  - Larger C focuses on classifying all points correctly but may lead to overfitting.
+- **gamma**: Kernel coefficient for RBF kernel; controls the influence of individual training samples.
+  - Small gamma means a large radius of influence
+  - Large gamma means a small radius of influence.
+
+Advantages of SVM:
+
+- **Effective in high-dimensional** spaces(eg text data or images).
+- **Scales well** to moderately large datasets.
+- **Robust to overfitting**, especially in high-dimensional spaces.
+- **Can handle non-linear relationships** using kernel functions.
+
+
+Limitations of SVM:
+- **Memory-intensive**: Requires more memory for large datasets.
+- **Sensitive to feature scaling**: Requires normalization or standardization of features.
+- **Choice of kernel and hyperparameters** can significantly affect performance.
+
+
+## Outlier Detection
+
+1. Graphical Methods:
+   - **Box Plots**: Visualize the distribution of data and identify outliers as points outside the whiskers.
+     - Outliers are typically defined as points that fall outside 1.5 times the interquartile range (IQR) from the first and third quartiles. Eg
+     - Q1 - 1.5 * IQR
+     - Q3 + 1.5 * IQR
+   - **Scatter Plots**: Plot data points to visually identify outliers based on their position relative to other points.
+   - **Histograms**: Show the distribution of data and highlight points that deviate significantly from the main distribution.
+
+2. Clustering Methods:
+   - **K-Means Clustering**: Identify outliers as points that are far from their assigned cluster centroids.
+   - **DBSCAN**: Detects outliers as points that do not belong to any dense region (noise points).
+   - **Hierarchical Clustering**: Identify outliers as points that do not form clusters or are isolated from other points.
+   - These **use distance metrics** to determine how far points are from their clusters or neighbors.
+
+3. Isolation Forest:
+   - An **ensemble-based method** that isolates anomalies by randomly partitioning the data.
+   - It builds an ensemble of isolation trees, where anomalies are expected to be isolated faster than normal points.
+   - It is particularly effective for high-dimensional data and can handle large datasets efficiently.
+   - does **not require** distance metrics or assumptions about the data distribution.
+
+## Recommender Systems
+
+1. **Content-Based Filtering**
+   - Uses item features (e.g., genre, price) and user preferences
+   - Independent of other users’ behavior
+   - A supervised learning problem (predict rating $y_i$ from features $x_i$)
+
+2. **Collaborative Filtering**
+   - Recommends based on user-item interactions
+   - Assumes similar users like similar items
+
+   a. **User-Based CF**
+      - Finds users with similar tastes
+      - Recommends what similar users liked
+
+   b. **Item-Based CF**
+      - Finds similar items
+      - Recommends based on a user’s past liked items
+
+**Types of Collaborative Filtering:**
+- Neighborhood-based: Use similarity metrics (e.g., cosine) to find neighbors
+- Latent Factor models: Project users/items into latent space to reveal patterns, such as SVD.
+- 
+
+**Matrix Factorization (MF):** (such as SVD)
+- Decomposes the user-item matrix into:
+  - User matrix (preferences)
+  - Item matrix (characteristics)
+- Product of the matrices ≈ original matrix
+- Fills in missing entries (predictions)
+
+## Class Imbalance Handling
+
+Class imbalance occurs when the number of instances in each class is not evenly distributed, leading to biased models that favor the majority class.
+
+To handle class imbalance, several techniques can be employed:
+
+#### SMOTE (Synthetic Minority Over-sampling Technique)
+
+Generates synthetic samples for the minority class by interpolating between existing minority class samples.
+
+SMOTE works by selecting a minority class sample and finding its k-nearest neighbors. 
+
+It then creates synthetic samples by interpolating between the selected sample and its neighbors.
+
+#### ADASYN (Adaptive Synthetic Sampling)
+
+An extension of SMOTE that focuses on generating synthetic samples in **regions where the minority class is underrepresented.**
+
+ADASYN adaptively generates more synthetic samples in regions where the minority class is sparse, helping to balance the class distribution.
+
+Focuses model attention where it struggles most (class boundaries)
+
+**Disadvantages:** Assumes space between minority samples belongs to the minority class—may not hold in non-linearly separable data
+
+
+# Lecture 8
+
+## Gradient Descent (GD)
+GD is an optimization alorthim used to minimize the loss function by adjusting the model weights.
+
+How it works:
+1. **Initialize weights**: Start with random weights or zeros.
+2. **Compute gradient**: Calculate the gradient of the loss function with respect to the weights. It computes the gradient (slope) of the loss with respect to all the data points.
+3. **Update weights**: Adjust the weights in the opposite direction of the gradient by a small step size (learning rate).
+4. **Repeat**: Repeat steps 2-3 until convergence (i.e., when the change in loss is below a threshold or a maximum number of iterations is reached).
+5. **Convergence**: Stop when the loss function converges or reaches a predefined threshold.
+
+Applicable to any differentiable loss function (e.g., in linear regression, logistic regression, neural networks).
+
+The **learning rate** (a hyperparameter between 0 and 1) determines how large each step is. It controls how quickly the model learns.
+
+## SGD
+Is a variant of GD that updates the weights using only a **single data point** (or a small batch) randomly chosen  at each iteration instead of the entire dataset.
+
+**Faster convergence**: Can converge faster than GD, especially for large datasets.
+
+**Noisy updates**: The updates can be noisy and may lead to oscillations (less stable) in the loss function.
+
+**Sensitive to learning rate**: Requires careful tuning of the learning rate to avoid divergence.
+
+#### Mini-Batch SGD
+Is a compromise between GD and SGD, where the weights are updated using a **small batch of data points** instead of the entire dataset or a single data point. eg. 32 or 64 samples at a time.
+
+This approach combines the benefits of both GD and SGD, providing a balance between convergence speed and stability.
+
+## Regularization (L0 / L1 / L2)
+
+Regularization adds a **penalty term to the loss function** to discourage overly complex models and prevent overfitting.
+
+#### L0 Regularization
+
+**Penalizes the number of non-zero weights** in the model. 
+
+It **encourages sparsity** in the model by minimizing the number of features used.
+
+Not differentiable—**rarely used** in practice.
+
+#### L1 Regularization (Lasso)
+
+L1 regularization adds a penalty equal to the **absolute value of the weights** to the loss function.
+
+It encourages sparsity in the model by driving some weights to zero, effectively selecting a simpler model.
+
+Solution is **not unique**, and it can lead to multiple solutions with different weights.
+
+Good when you suspect that only a few features are important for the model.
+
+#### L2 Regularization (Ridge)
+
+L2 regularization adds a penalty equal to the **square of the weights** to the loss function.
+
+It discourages large weights and helps prevent overfitting by **shrinking the weights towards zero**
+
+Useful when **all features matter**, but you want to avoid overfitting (e.g., multicollinearity).
+
+Solution is **unique** and leads to a smoother model and data should be **normalized/scaled before** applying L2 regularization.
+
+## Early Stopping
+
+A training strategy that stops training when validation performance stops improving.
+Prevents overfitting by halting before the model starts learning noise.
+
+## Implementation Steps
+
+1. **Monitor Validation Performance**: Track the model's performance on a validation set during training.
+2. **Define Patience**: Set a patience parameter that determines how many epochs to wait for an improvement before stopping.
+3. **Stop Training**: If no improvement is observed after the defined patience, stop training and restore the best model weights.
+
+## Dropout
+
+A regularization technique for neural networks to prevent overfitting.
+
+During training, randomly (drops) **set a fraction of the input units to zero** at each update, which helps prevent the network from becoming too dependent on specific neurons.
+
+This forces the network to learn more robust features that are not reliant on any single neuron.
+
+When to adjust:
+  - Overfitting: Increase dropout.
+  - Underfitting: Decrease dropout.
+
+Dropout slows convergence but often leads to **better generalization**. It complements early stopping.
+
+## Validation Loss
+Validation loss is the loss calculated on a separate validation dataset that is not used for training.
+
+It is used to monitor the model's performance during training and helps in detecting overfitting.
+
+When validation loss increases while training loss decreases → overfitting.
+
+Validation loss serves as a **proxy for test performance** since the test set should remain untouched during training.
+
+## BatchNorm
+
+Batch Normalization (BatchNorm) is a technique used to **normalize the inputs of each layer** in a neural network.
+
+Normalizes the inputs to a layer across a mini-batch (mean = 0, variance = 1), then applies a learned scaling and shift.
+
+Helps stabilize and speed up training by **reducing internal covariate shift** (the change in distribution of inputs to layers during training).
+
+Often used after linear/convolutional layers and before activation functions. It can be applied to both fully connected and convolutional layers.
+
+If BN is the first layer, no need to manually standardize input data.
+
+Works best in CNNs and feedforward networks. Not ideal for RNNs — use alternatives like Gradient Clipping instead.
+
+Benefits:
+
+- **Faster convergence**: Reduces the number of training epochs required.
+- **Improved generalization**: Helps prevent overfitting by acting as a form of regularization.
+- **Higher learning rates**: Allows for larger learning rates, which can lead to faster training.
+- **Reduced sensitivity to initialization**: Makes the model less sensitive to weight initialization.
+- **Helps prevent vanishing/exploding gradients**: Keeps the gradients in a reasonable range, especially in deep networks.
+
+## Vanishing Gradients Problem
+
+Occurs when gradients become **too small during backpropagation** through deep neural networks, leading to slow or stalled learning.
+
+Early layers learn very slowly due to tiny gradients.
+
+This problem is particularly prevalent in deep networks with activation functions like **sigmoid or tanh**, which **squash the input into a small range**, causing **gradients to diminish** as they propagate back through the layers.
+
+Solutions include:
+
+- **BatchNorm:** Stabilizes input distributions.
+- **ReLU activation:** Doesn’t squash gradients.
+- **Gradient Clipping:** Prevents exploding gradients by capping the gradients during backpropagation.
+
+## Backpropagation
+
+Backpropagation is the algorithm used to **compute the gradients of the loss function with respect to the model parameters** (weights and biases) in a neural network.
+
+It is a key component of training neural networks using gradient descent (or its variants like SGD).
+
+**Goal:** Minimize the loss function by adjusting the model parameters (weights and biases) based on the computed gradients, to reduce the error between the predicted output and the actual target values.
+
+
+The backpropagation algorithm consists of two main steps:
+
+1. **Forward Pass**: Compute the output of the network by passing the input through each layer, applying the activation functions, and calculating the loss.
+   - You pass input data through the neural network.
+	 - Each layer processes the data using weights and activation functions.
+	 - At the end, you get a prediction and you compute the loss (error) by comparing the prediction to the actual target values, using a loss function (e.g., mean squared error for regression, cross-entropy for classification).
+   - The forward pass computes the output of the network and the loss function.
+   - The loss function quantifies how well the model is performing by measuring the difference between the predicted output and the actual target values.
+  
+
+2. **Backward Pass**: Compute the gradients of the loss with respect to each parameter (weight and bias) by applying the chain rule of calculus.
+   - Start at the output layer and propagate the gradients backward through the network.
+   - For each layer, compute the gradient of the loss with respect to the weights and biases using the chain rule.
+   - Update the weights and biases using the computed gradients and a learning rate (the learning rate controls how big of a step you take in the direction of the gradient).
+   - The backward pass computes the gradients needed for the optimization step.
+   - The gradients are used to update the model parameters (weights and biases) in the **direction that minimizes the loss function.**
 
 
 # Lecture 9
