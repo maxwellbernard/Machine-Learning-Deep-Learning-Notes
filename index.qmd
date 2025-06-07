@@ -43,7 +43,7 @@ format:
 
 ## Encoding Categorical Variables
 
-### One-Hot Encoding
+#### One-Hot Encoding
 Converts categorical variables into binary vectors, where each category is represented by a separate binary feature. For example, if a categorical variable has three categories (A, B, C), it will be transformed into three binary features: [1, 0, 0] for A, [0, 1, 0] for B, and [0, 0, 1] for C. This method is suitable for nominal categorical variables without any ordinal relationship.
 
 - Can use `pd.get_dummies()` in pandas to perform one-hot encoding.
@@ -95,7 +95,7 @@ While dropping one column is usually the best practice, there are special cases 
   -	These models do not assume linear relationships between features, so multicollinearity is less of an issue.
   -	You can keep all columns if the model does not suffer from collinearity issues.
 
-### Frequency Encoding
+#### Frequency Encoding
 Frequency encoding is a technique used to convert categorical variables into numerical representations by replacing each category with its frequency or count in the dataset. This method captures the distribution of categories and can be useful for machine learning models that require numerical input.
 
 -	Frequency encoding is generally more efficient and scalable when the categorical variable has high cardinality. 
@@ -122,7 +122,7 @@ An approach for data analysis that employs a variety of techniques (mostly graph
 
 **Pairplot**: A grid of scatter plots that shows the pairwise relationships between multiple variables in a dataset. It is useful for visualizing the distribution of individual variables and the relationships between them, helping to identify correlations and patterns.
 
-### Skewness
+#### Skewness
 
 Skewness is a measure of the asymmetry of the probability distribution of a real-valued random variable. It indicates whether the data is skewed to the left (negative skew) or to the right (positive skew).
 
@@ -1477,6 +1477,28 @@ Solution is **unique** and leads to a smoother model and data should be **normal
 A training strategy that stops training when validation performance stops improving.
 Prevents overfitting by halting before the model starts learning noise.
 
+``` python
+from keras.callbacks import EarlyStopping
+early_stop = EarlyStopping(
+  monitor='val_loss', # Monitor validation loss
+  patience=5, # Stops training after 5 epochs of no improvement
+  restore_best_weights=True # roll back to the best weights
+)
+
+# Fit the model with early stopping
+model.fit(
+  X_train,
+  y_train,
+  epochs=50, 
+  validation_split=0.2, # 20% of data for validation
+  batch_size=32, # Batch size for training
+  shuffle=True, # Shuffle the training data
+  verbose=1, # Print training progress
+  callbacks=[early_stop]
+)
+```
+
+
 ## Implementation Steps
 
 1. **Monitor Validation Performance**: Track the model's performance on a validation set during training.
@@ -1527,6 +1549,9 @@ Benefits:
 - **Higher learning rates**: Allows for larger learning rates, which can lead to faster training.
 - **Reduced sensitivity to initialization**: Makes the model less sensitive to weight initialization.
 - **Helps prevent vanishing/exploding gradients**: Keeps the gradients in a reasonable range, especially in deep networks.
+
+
+If you add a BN layer as the very first layer of your NN model, it will normalize the input data before passing it to the first hidden layer, you do not need to standardize the input data before training, as the BN layer will take care of that. However, if you add a BN layer after the first hidden layer, you should standardize the input data before training, as the BN layer will not normalize the input data before passing it to the first hidden layer.
 
 ## Vanishing Gradients Problem
 
@@ -1590,7 +1615,7 @@ The backpropagation algorithm consists of two main steps:
   - The model weights are used to transform the input data into the latent feature space.
   - V is the weight matrix for the output layer, which maps the latent features to the output labels, it is represented by $V \in \mathbb{R}^{k \times c}$, where $c$ is the number of classes. Why is it a one for one mapping? Because the output labels are one-hot encoded, meaning that each sample belongs to only one class.
 
-## Supervised Learning Process
+#### Supervised Learning Process
 
 - **Standard supervised learning process:**
   - Learn parameters 'w' based on original features $x_i$ and target labels $y_i$.
@@ -1606,7 +1631,7 @@ The backpropagation algorithm consists of two main steps:
   - $W$ is the transformation weight matrix that maps the original input features to the latent feature space
   - $v$ is the weight matrix for the output layer that maps the latent features to the output labels.
 
-## Linearity and Non-Linearity
+#### Linearity and Non-Linearity
 - **Linear latent-factor model with linear regression:**
   - $y_i = W^T x_i + \epsilon_i$, where $\epsilon_i$ is the error term.
   - The model is linear in both the input features and the latent features.
@@ -1644,197 +1669,195 @@ The backpropagation algorithm consists of two main steps:
      - It shows that the network is a composition of multiple non-linear functions, which allows it to learn complex relationships between the input features and the output labels. It is essentially a function composed of many sub-functions, each of which is a non-linear transformation of the previous one.
 
 ## Activation Functions
-- Defines how weighted sum of inputs is transformed into output of neuron from a node (layer) in a neural network.
-- All layers use the same activation function, for simplicity and stability across the network.
-- Output layer uses a different activation function from the hidden layers. For example:
-- 
+Activation functions define how the **weighted sum of inputs** is **transformed** into the **output** of a neuron. They introduce non-linearity, which enables neural networks to model complex patterns.
+
+All layers use the same activation function, for simplicity and stability across the network.
+
+Output layer uses a different activation function from the hidden layers. For example:
+
   - Sigmoid function for binary classification
-  - Softmax function for multi-class classification
+  - **Softmax** function for **multi-class** classification
   - Linear function for regression tasks
 
-- Large DNN (deep neural network) with non-linear activation functions can approximate any continuous function.
-  - This is known as the **universal approximation theorem**, which states that a feedforward neural network with a single hidden layer containing a finite number of neurons can approximate any continuous function on compact subsets of $\mathbb{R}^n$, given appropriate weights and biases.
-- **Sigmoid** function (S shaped) function, historically the most common activation function, but can cause vanishing gradient problem.
-- **Tanh** function (hyperbolic tangent) is a scaled version of the sigmoid function, which outputs values between -1 and 1. It is zero-centered, meaning that it can output negative values, which can help with convergence during training.
-- **ReLU (Rectified Linear Unit)** function is a piecewise linear function that outputs the input directly if it is positive; otherwise, it outputs zero. It is *computationally efficient* and helps mitigate the vanishing gradient problem, making it a popular choice for deep learning models.
-- **Softmax** function is used in the output layer of multi-class classification problems. It converts the raw output scores (logits) into probabilities by exponentiating each score and normalizing them by dividing by the sum of all exponentiated scores. The softmax function ensures that the output probabilities sum to 1, making it *suitable for multi-class classification tasks*, such as image classification or natural language processing tasks. eg Cat or Dog.
+**Universal Approximation Theorem**:
+A deep neural network with non-linear activation functions can approximate any continuous function on compact subsets of $\mathbb{R}^n$, given sufficient neurons.
+
+#### Common Activation Functions
+
+| Function      | Output Range        |  Properties |
+|-----------|----------|--------------------|
+| Sigmoid     | (0, 1)           | S-shaped curve, smooth gradient. Good for binary classification. Can cause vanishing gradient problem |
+| Tanh        | (-1, 1)          | Scaled version of sigmoid, zero-centered. Helps with convergence. Can still suffer from vanishing gradient |
+| ReLU        | [0, ∞)           | Outputs input if positive, else 0. Computationally efficient. Helps avoid vanishing gradients |
+| Softmax    | (0, 1)           | Converts logits to probability distribution. Used in multi-class classification. Sensitive to outliers |
+
 
 ## Bias
-Bias, Variance and Irreducible Error (due to noisiness of data) are the three sources of error in a model, which make up the **Generalization Error** (how well the model performs on unseen data).
+Bias is the error from incorrect model assumptions.
 
-Bias is the error introduced by approximating a real-world problem, which may be complex, by a simplified model. It is the difference between the expected prediction of the model and the true value we are trying to predict.
+Bias is one of the three main sources of error in a model:
 
-- **High Bias** = model too simple, leading to underfitting of the training data.
+1. 	Bias – due to overly simplistic assumptions.
+2. 	Variance – due to sensitivity to small data fluctuations.
+3. 	Irreducible error – due to noise in the data itself.
+
+- **High Bias** = model too simple, leading to **underfitting** of the training data.
   - eg fitting a straight line to data thats not linear.
   - leads to high training error and high test error.
-- **Low Bias** = model too complex, leading to overfitting of the training data.
+- **Low Bias** = model too complex, leading to **overfitting** of the training data.
   - eg fitting a complex curve to data that is linear.
   - leads to low training error but high test error.
 
-- **Bias-Variance Tradeoff**: 
-  - The bias-variance tradeoff is the balance between bias and variance in a model. 
-  - A model with high bias pays little attention to the training data and oversimplifies the model, leading to high error on both training and test data (underfitting).
-  - A model with high variance pays too much attention to the training data and captures noise in the data, leading to low error on training data but high error on test data (overfitting).
-  - The goal is to find a model that minimizes both bias and variance, achieving good generalization performance on unseen data.
+**Bias-Variance Tradeoff**: 
+Goal: Find a balance between underfitting (bias) and overfitting (variance)
 
-- When adding bias, we choose the value of 1 as the bias term, which is a constant value added to the weighted sum of inputs. The bias term allows the model to fit the data better by shifting the activation function to the left or right, enabling it to learn more complex relationships between the input features and the output labels.
+Best model: Low bias + low variance, generalizes well to unseen data.
 
-- LinearSVC class from sklearn.svm is a linear support vector classifier that uses a linear kernel to separate the data into different classes. It is used for binary classification tasks, where the goal is to find a hyperplane that separates the two classes in the feature space. The LinearSVC class uses the hinge loss function to optimize the model parameters and minimize the classification error. It is suitable for large datasets and high-dimensional feature spaces, as it is computationally efficient and can handle large-scale problems.
+**Bias Term in Neural Nets**
 
-- This model in Scikit-learn includes regularization, which helps to prevent overfitting by adding a penalty term to the loss function. The regularization parameter can be adjusted to control the amount of regularization applied to the model.
+A bias term is usually a constant value (often 1) added to the weighted sum.
+
+It **allows the activation function to shift left/right**, helping the model learn better patterns.
+
+Without bias, the model is constrained to pass through the origin.
 
 ## TLUs
-- a Threshold Logic Unit (TLU) is a simple model of a neuron that computes a weighted sum of its inputs and applies a threshold function to produce an output. The TLU can be represented mathematically as:
-  - $y = \begin{cases} 1 & \text{if } w^T x + b > 0 \\ 0 & \text{otherwise} \end{cases}$, where $w$ is the weight vector, $x$ is the input vector, and $b$ is the bias term.
-- The TLU can be used to model binary classification problems, where the goal is to classify the input data into two classes based on the weighted sum of the inputs. The TLU can be trained using supervised learning algorithms, such as gradient descent or stochastic gradient descent, to learn the optimal weights and bias term that minimize the classification error.
-- Unit has a threshold $\theta$ and each input $x_i$ has a weight $w_i$.
-- TLUs are the foundation of Perceptrons and MPLs, simplyfing complex biological neurons to a simple model.
-- It is like a light switch, where the input is the current and the output is the light. The TLU turns on (outputs 1) when the weighted sum of inputs exceeds a certain threshold (the current is above a certain level), and turns off (outputs 0) when the weighted sum of inputs is below the threshold (the current is below a certain level).
+Threshold Logic Unit (TLU) is a simple model of a neuron that:
+
+  - Computes a **weighted sum of its inputs**
+  - Applies a threshold function to produce a binary output. The TLU can be represented mathematically as: $y = \begin{cases} 1 & \text{if } w^T x + b > 0 \\ 0 & \text{otherwise} \end{cases}$
+    - $w$ is the weight vector
+    - $x$ is the input vector
+    - $b$ is the bias term.
+
+TLUs form the basis of perceptrons and MLPs.
+
+It is like a light switch, where the input is the current and the output is the light. The TLU turns on (outputs 1) when the weighted sum of inputs exceeds a certain threshold (the current is above a certain level), and turns off (outputs 0) when the weighted sum of inputs is below the threshold (the current is below a certain level).
+
+Issues with TLUs:
+
+- Cannot learn non-linear functions (e.g., XOR problem) 
+- TLUs are not differentiable at the threshold, which makes it hard to apply gradient descent for training.
+- TLUs are limited to binary outputs (0 or 1), which restricts their applicability to binary classification tasks.
+- TLUs do not have a bias term, which limits their ability to fit the data well.
+- No hidden layers, which limits their ability to learn complex patterns in the data.
 
 ## Perceptron
-- Simpliest ANN (Artificial Neural Network) model, consisting of a single layer of TLUs.
-- The Perceptron is a type of linear classifier that uses a single layer of TLUs to classify input data into two classes. It is a supervised learning algorithm that learns the optimal weights and bias term from the training data using the perceptron learning rule.
-- Each TLU computes a weighted sum of its inputs and applies a threshold function to produce an output.
-- Each TLU connects to all inputs, it computes the linear combination of the inputs and weights, and applies a non-linear activation function to produce the output.
-- An extra bias feature is generally added to the input vector, which is a constant value of 1. This allows the model to fit the data better by shifting the activation function to the left or right, enabling it to learn more complex relationships between the input features and the output labels.
+Simplest ANN (Artificial Neural Network) model, consisting of a **single layer of TLUs.**
 
--**Training the Perceptron:**
-  - Step 1: Perceptron is fed one training example at a time, and the weights are updated based on the error between the predicted output and the actual output.
-  - Step 2: For every output neuron that produced a wrong prediction, it updates the weights of the inputs to that neuron that would have contributed to the correct prediction.
-  - Uses heavside step function as activation function, which outputs 1 if the weighted sum of inputs is greater than a certain threshold, and 0 otherwise.
-  - It is similiar to SGD Classifier as it updates the weights based on the error between the predicted output and the actual output, but it is a simpler model that uses a single layer of TLUs to classify input data into two classes.
+Linear classifier that learns weights and bias using the Perceptron learning rule.
 
--**Limitations:**
-  - The Perceptron can only learn linearly separable functions, meaning that it can only classify input data that can be separated by a straight line (or hyperplane) in the feature space. 
-  - It cannot learn non-linear functions, such as XOR, which requires a more complex model with multiple layers of TLUs or non-linear activation functions.
-  - The Perceptron is sensitive to the choice of learning rate and the initial weights, which can affect the convergence of the algorithm and the final model performance.
-  - Perceptrons do not output a class probability, but rather a binary classification (0 or 1). This means that they cannot be used for multi-class classification problems without additional modifications.
+Uses the Heaviside step function as its activation:
+- output is 1 if weighted sunm of inputs > threshold, else 0.
+
+A bias input (1) is typically added to allow shifting the activation threshold.
+
+**Training the Perceptron:**
+1. Input one training sample at a time.
+2. Compute the predicted output using the current weights and bias.
+3. Compare the predicted output with the actual output.
+4. Update the weights and bias based on the error.
+5. Repeat steps 1-4 for a fixed number of epochs or until convergence.
+
+**Limitations:**
+Can only learn linearly separable functions, meaning that it can only classify input data that can be separated by a straight line (or hyperplane) in the feature space. 
+
+**Cannot learn non-linear functions**, such as XOR, which requires a more complex model with multiple layers of TLUs or non-linear activation functions.
+
+**Sensitive** to the choice of **learning rate** and the **initial weights**, which can affect the convergence of the algorithm and the final model performance.
+
+Perceptrons do not output a class probability, but rather a binary classification (0 or 1). This means that they are **not directly suitable for multi-class classification.**
+
 
 ## Multi-Layer Perceptron (MLP)
 
-A Multi-Layer Perceptron (MLP) is a type of artificial neural network (ANN) that consists of multiple layers of neurons, including an input layer, one or more hidden layers, and an output layer. Each layer is composed of multiple neurons (or TLUs), and each neuron in a layer is connected to **all neurons in the previous layer**. 
+A MLP is a type of artificial neural network (ANN) with:
+   - **Input layer:** Receives input features.
+   - **One or more hidden layers:** Each layer consists of multiple neurons (or TLUs) that apply non-linear activation functions to learn complex patterns.
+   - **Output layer:** Produces the final output, which can be a single value (for regression) or a probability distribution over classes (for classification).
 
-The MLP **uses non-linear activation functions** to introduce non-linearity into the model, allowing it to learn complex relationships between the input features and the output labels.
+Each neuron in a layer is connected to **all neurons in the previous layer**, and applies:
+ - a weighted sum of inputs
+ - non-linear activation function (e.g., ReLU, sigmoid, tanh) to introduce non-linearity.
 
-Every input/hidden layer includes a bias neauron with a constant value of 1, which allows the model to fit the data better by shifting the activation function to the left or right, enabling it to learn more complex relationships between the input features and the output labels.
+Every input/hidden layer includes a **bias neuron with a constant value of 1**, which allows the model to fit the data better by s**hifting the activation function to the left or right**, enabling it to learn more complex relationships between the input features and the output labels.
+
 
 ## Feedforward Neural Network
 
-A feedforward neural network is a type of artificial neural network where the connections between the neurons do not form cycles. The **information flows in one direction**, from the input layer to the output layer, without any feedback loops. 
+A feedforward neural network is a type of MLP where:
+
+   - The **information flows in one direction**, from the input layer to the output layer, without any feedback loops.
 
 Each neuron in a layer receives inputs from the previous layer, applies a weighted sum and an activation function, and passes the output to the next layer. The feedforward neural network is trained using supervised learning algorithms, such as backpropagation, to learn the optimal weights and biases that minimize the classification error.
 
-## Backpropagation
-- Computes neural network gradients using the chain rule of calculus.
-- The backpropagation algorithm is used to compute the gradients of the loss function with respect to the model parameters (weights and biases) in a feedforward neural network. It uses the chain rule of calculus to propagate the error backward through the network, layer by layer, and update the weights and biases using gradient descent or stochastic gradient descent.
-- The backpropagation algorithm consists of two main steps:
-  - **Forward Pass**: Compute the output of the network for a given input by passing the input through each layer and applying the activation functions. This step calculates the predicted output and the loss function.
-  - **Backward Pass**: Compute the gradients of the loss function with respect to the model parameters (weights and biases) by applying the chain rule of calculus. This step updates the weights and biases using gradient descent or stochastic gradient descent.
-- The backpropagation algorithm is efficient and can be applied to large neural networks with many layers and neurons. It is a key component of training deep learning models and allows them to learn complex relationships between the input features and the output labels.
-- The backpropagation algorithm is crucial for optimizing the performance of neural networks, enabling them to generalize well on unseen data.
-
-**Cost of Backpropagation**:
-The total cost of backpropagation over the entire traning set is O(n * m), where n is the number of training examples and m is the number of weights in the network. This assumes a forward pass cost of O(m) and a backward pass cost of O(m) for each training example.
-
-- A more detailed analysis of the cost of backpropagation is as follows:
-  - For each layer, the cost of computing the weighted sum of inputs and applying the activation function is O(dk), where d is the number of features in the input layer and k is the number of neurons in the hidden layers.
-  - The cost of computing the gradients for each layer is O(mk), where m is the number of layers and k is the number of neurons in the hidden layers.
-  - The total **cost of backpropagation per pass is O(dk + mk^2)**, where d is the number of features in the input layer and k is the number of neurons in the hidden layers.
-
-## Gradient Problem
-The gradient problem refers to the challenges faced during the training of deep neural networks, particularly when using gradient-based optimization algorithms such as stochastic gradient descent (SGD). The two main issues associated with the gradient problem are:
-
-**Vanishing Gradient Problem**: In deep networks, the gradients of the loss function with respect to the model parameters can become very small as they are propagated backward through the layers. This can lead to slow convergence or even prevent the model from learning altogether, especially in the earlier layers of the network. The vanishing gradient problem is particularly common when using activation functions like **sigmoid or tanh**, which can saturate and produce very small gradients for large input values.
-
-- Solution: 
-    - Use activation functions that do not saturate, such as **ReLU (Rectified Linear Unit)** or its variants (e.g., Leaky ReLU, Parametric ReLU).
-    - Use techniques like **batch normalization** to normalize the inputs to each layer, which can help mitigate the vanishing gradient problem.
-  
-**Exploding Gradient Problem**: In contrast to the vanishing gradient problem, the exploding gradient problem occurs when the gradients become excessively large during backpropagation. This can lead to numerical instability and cause the model parameters to diverge, resulting in poor performance or failure to converge. The exploding gradient problem is often encountered in deep networks with many layers or when using certain activation functions.
-
-- Solution:
-  - Proper activation function choice such as ReLU which doe not produce large gradients.
-  - Use weight regularization techniques, such as L1 or L2 regularization, to penalize large weights and prevent them from growing excessively during training.
-
 # Lecture 10
-
-## BatchNorm
-
-- BN (Batch Normalization) is a technique used inside neural networks to make training faster and more stable.
-- It normalizes the input to each layer (i.e., adjusts the values so they have zero mean and unit variance), then scales and shifts it — all during training.
-
-How it works:
-
-- For each mini-batch during training:
-  - Calculate the mean and variance of the input to the layer.
-  - Normalize the input (subtract mean, divide by standard deviation).
-  - Then apply scaling and shifting using learnable parameters $\gamma$ and $\beta$.
-
-Why its useful:
-
-- It helps to reduce internal covariate shift, which is the change in the distribution of layer inputs during training. This means it keeps the inputs to each layer more stable, making it easier for the network to learn.
-- It helps solve the vanishing/exploding gradient problem by keeping the inputs to each layer in a reasonable range.
-- It can act as a form of regularization, reducing the need for other regularization techniques like dropout.
-- It often improves accuracy and allows for higher learning rates, speeding up training.
-
-If you add a BN layer as the very first layer of your NN model, it will normalize the input data before passing it to the first hidden layer, you do not need to standardize the input data before training, as the BN layer will take care of that. However, if you add a BN layer after the first hidden layer, you should standardize the input data before training, as the BN layer will not normalize the input data before passing it to the first hidden layer.
-
-Limitations
-- Slower training per epoch due to the extra computations.
-- Not easy to use in RNNs because the batch statistics can be different for each time step.
-  - **Gradient Clipping** is a technique used to prevent exploding gradients in RNNs by limiting the maximum value of the gradients during backpropagation. It helps to stabilize the training process and prevent numerical instability, but this technique does not help with the vanishing gradient problem.
 
 ## RNNs (Recurrent Neural Networks)
 
-- RNNs are a type of neural network designed to process sequential data, such as time series or natural language. 
-- They have a feedback loop that allows them to maintain a hidden state, which captures information from previous time steps.
-- This hidden state is updated at each time step based on the current input and the previous hidden state, allowing RNNs to learn temporal dependencies in the data.
+RNNs are a type of neural network designed to **process sequential data**, such as time series or natural language. 
 
-Computations within a recurrent layer:
-- The input at time step t is denoted as $x_t$, the hidden state at time step t is denoted as $h_t$, and the output at time step t is denoted as $y_t$.
-- Each neuron in a recurrent layer (RL) recieves as input, output of previous layer and its current input.
-- Neurons each have two weight vectors
-- Neurons performe an affine transformation on the input and the previous hidden state, followed by a non-linear activation function.
-- Within RL, output of neurons is moved to a dens/fully connected layer with a softmax activation function (to turn the output into probabilities), which produces the final output of the RNN at time step t.
+They have a feedback loop that allows them to **maintain a hidden state**, which captures information from previous time steps.
 
-## RNN Training: BPTT
+This hidden state acts as **memory**, enabling the model to capture **temporal dependencies** across time steps.
 
-- Standard backpropagation algorithm is not suitable for training RNNs because in RNNs, the output at each time step depends on the hidden state from the previous time step, creating a temporal dependency.
+**Hidden state:** updated at every time step using both the current input and the previous hidden state.
 
-- The shared weights and temporal dependencies create a dynamic, time-dependent structure that standard backpropagation, which assumes a static layer-by-layer architecture, cannot properly optimize due to gradient instability over many time steps.
+**Outputs:** Typically passed through a fully connected (dense) layer and then a softmax function (for classification tasks).
 
-- BPTT (Backpropagation Through Time) is an extension of the backpropagation algorithm used to train RNNs.
-- It involves unrolling the RNN through time, treating each time step as a separate layer in a feedforward neural network.
-- The gradients are computed for each time step and then accumulated to update the weights of the RNN.
-- BPTT can be computationally expensive and may suffer from the vanishing/exploding gradient problem, especially for long sequences.
+#### RNN Training: BPTT
 
--**Limitations**:
-  - BPTT can be computationally expensive and may suffer from the vanishing/exploding gradient problem, especially for long sequences.
-  - It requires storing the hidden states and gradients for each time step, which can lead to high memory usage.
-  - BPTT is not suitable for online learning or real-time applications, as it requires processing the entire sequence before updating the weights.
-  - Solution: use LTSM (Long Short-Term Memory) networks, which are designed to mitigate the vanishing/exploding gradient problem and improve the training of RNNs on long sequences.
+Standard backpropagation algorithm is not suitable for training RNNs because in RNNs, the output at each time step depends on the hidden state from the previous time step, creating a temporal dependency.
+
+Backpropagation Through Time (BPTT) is an adaptation of the standard backpropagation algorithm tailored for training RNNs.
+
+How it works:
+1. The RNN is unrolled over time — each time step is treated like a separate layer in a deep feedforward network.
+2. Forward pass: Compute activations across all time steps.
+3. Backward pass: Compute gradients for each time step, moving from the last time step back to the first.
+4. Gradient accumulation: Gradients from all time steps are summed and used to update the shared weights (since weights are reused at each time step).
+
+
+**Limitations**:
+
+  - **Computationally expensive**
+  - **Vanishing/exploding gradients:** Gradients may shrink or explode as they are propagated backward
+  - **Memory-intensive:** All hidden states and intermediate values must be stored during the forward pass to compute gradients during the backward pass.
+
+Solutions to these limitations include:
+
+**LSTM (Long Short-Term Memory)** networks and **GRU (Gated Recurrent Unit)** networks, which are specialized RNN architectures designed to mitigate the vanishing gradient problem and capture long-term dependencies more effectively. These models use **gating mechanisms** to control the flow of information and are more stable when training on long sequences.
+
+
 
 ## DL Frameworks
-- Deep learning frameworks are software libraries that simplify the development, training, and deployment of deep neural networks, including architectures like CNNs,RNNs and MLPs.
-- They provide high-level APIs, pre-built layers, automatic differentiation for gradient computation, and hardware acceleration (e.g., GPU support) to streamline tasks like model design, optimization, and evaluation.
-- Some popular deep learning frameworks include:
+Deep learning frameworks are software libraries that simplify the development, training, and deployment of deep neural networks, including architectures like CNNs,RNNs and MLPs.
+
+They provide high-level APIs, pre-built layers, automatic differentiation for gradient computation, and hardware acceleration (e.g., GPU support) to streamline tasks like model design, optimization, and evaluation.
+
+Some popular deep learning frameworks include:
+
   - **TensorFlow**: Developed by Google, TensorFlow is an open-source deep learning framework that provides a flexible and comprehensive ecosystem for building and deploying machine learning models. It supports both high-level APIs (like Keras) and low-level operations for custom model development.
   - **PyTorch**: Developed by Facebook's AI Research lab, PyTorch is an open-source deep learning framework that emphasizes dynamic computation graphs, making it easy to build and modify neural networks on-the-fly. It is widely used in research and production environments.
   - **Keras**: Keras is a high-level neural networks API written in Python that runs on top of TensorFlow. It provides a user-friendly interface for building and training deep learning models, making it accessible to beginners and experienced practitioners alike.
   - **MXNet**: An open-source deep learning framework developed by Apache, MXNet is designed for efficiency and flexibility. It supports both symbolic and imperative programming, allowing users to choose the best approach for their specific use case.
   - **Caffe**: Developed by the Berkeley Vision and Learning Center (BVLC), Caffe is a deep learning framework focused on speed and modularity. It is particularly well-suited for image classification tasks and has a strong community support.
 
-## Non-Distributed vs. Distributed ML
+#### Non-Distributed vs. Distributed ML
 
--**Non-Distributed ML**: Non-distributed ML involves training a machine learning model on a single machine (e.g., a laptop, server, or GPU) using its local computational resources (CPU/GPU, memory, storage). The entire dataset and model computations, including forward passes, gradient calculations, and weight updates, occur on this single machine. Common frameworks like Scikit-learn, TensorFlow, or PyTorch can be used in non-distributed settings for small to medium-sized datasets and models, such as linear regression, small neural networks, or tree-based models.
+**Non-Distributed ML**: Non-distributed ML involves training a machine learning model on a single machine (e.g., a laptop, server, or GPU) using its local computational resources (CPU/GPU, memory, storage). The entire dataset and model computations, including forward passes, gradient calculations, and weight updates, occur on this single machine. Common frameworks like Scikit-learn, TensorFlow, or PyTorch can be used in non-distributed settings for small to medium-sized datasets and models, such as linear regression, small neural networks, or tree-based models.
 
--**Distributed ML**: Distributed ML involves training a machine learning model across multiple machines or nodes, leveraging their combined computational resources to handle larger datasets and more complex models. This approach is essential for scaling up training processes, especially in deep learning, where models can be very large and require significant computational power. Distributed ML frameworks like TensorFlow and PyTorch provide tools for parallelizing computations, synchronizing gradients, and managing data across multiple devices or clusters. Distributed ML can be implemented using data parallelism (splitting the dataset across machines) or model parallelism (splitting the model across machines).
+**Distributed ML**: Distributed ML involves training a machine learning model across multiple machines or nodes, leveraging their combined computational resources to handle larger datasets and more complex models. This approach is essential for scaling up training processes, especially in deep learning, where models can be very large and require significant computational power. Distributed ML frameworks like TensorFlow and PyTorch provide tools for parallelizing computations, synchronizing gradients, and managing data across multiple devices or clusters. Distributed ML can be implemented using data parallelism (splitting the dataset across machines) or model parallelism (splitting the model across machines).
 
-## TensorFlow
-- TensorFlow is an open-source deep learning framework developed by Google that provides a flexible and comprehensive ecosystem for building and deploying machine learning models. It supports both high-level APIs (like Keras) and low-level operations for custom model development.
-- TensorFlow is designed to be efficient and scalable, allowing users to train models on a single machine or across multiple devices (CPUs, GPUs, TPUs) and even in distributed environments. It provides tools for automatic differentiation, optimization, and model evaluation, making it suitable for a wide range of applications, including computer vision, natural language processing, and reinforcement learning.
-- Its core is very similar to NumPy, but it uses tensors (multi-dimensional arrays) instead of arrays. Tensors are the fundamental data structure in TensorFlow and can be manipulated using various operations, similar to NumPy arrays.
-- Core features include:
+#### TensorFlow
+TensorFlow is an open-source deep learning framework developed by Google that provides a flexible and comprehensive ecosystem for building and deploying machine learning models. It supports both high-level APIs (like Keras) and low-level operations for custom model development.
+
+TensorFlow is designed to be efficient and scalable, allowing users to train models on a single machine or across multiple devices (CPUs, GPUs, TPUs) and even in distributed environments. It provides tools for automatic differentiation, optimization, and model evaluation, making it suitable for a wide range of applications, including computer vision, natural language processing, and reinforcement learning.
+
+Its core is very similar to NumPy, but it uses tensors (multi-dimensional arrays) instead of arrays. Tensors are the fundamental data structure in TensorFlow and can be manipulated using various operations, similar to NumPy arrays.
+
+Core features include:
+
   - **Tensors**: Multi-dimensional arrays that represent data in TensorFlow. Tensors can have different ranks (dimensions) and shapes, allowing for flexible representation of data.
   - **Graphs**: TensorFlow uses a computational graph to represent the flow of data and operations. Nodes in the graph represent operations (e.g., addition, multiplication), while edges represent the tensors flowing between them. This allows for efficient execution and optimization of computations.
   - **Sessions**: In TensorFlow 1.x, a session is used to execute the computational graph. In TensorFlow 2.x, eager execution is enabled by default, allowing for immediate evaluation of operations without the need for sessions.
@@ -1893,19 +1916,24 @@ model.summary()
 # Lecture 11
 
 ## LTSM
-LSTM (Long Short-Term Memory) networks are a type of recurrent neural network (RNN) designed to handle long-term dependencies better than traditional RNNs, particularly the vanishing gradient problem.
+LSTM (Long Short-Term Memory) networks are a type of recurrent neural network (RNN) designed to **handle long-term dependencies** better than traditional RNNs, particularly the **vanishing gradient problem.**
 
 They achieve this through a unique architecture that includes memory cells and gating mechanisms, allowing them to maintain and control information over long sequences.
 
-- Components of LSTM:
+Components of LSTM:
+
   - **Cell State**: The memory of the LSTM cell, which carries information across time steps.
   - **Forget Gate**: Determines what information to discard from the cell state.
   - **Input Gate**: Decides what new information to add to the cell state (c)
   - **Output Gate**: Controls what information to output from the cell state to the next layer.
 
-**Peephole Connections (LSTM Variant)**: Peephole connections are a variant of LSTM architecture that allows the gates to access the cell state directly. This enables the gates to make more informed decisions about what information to keep or discard, improving the model's performance on tasks with long-term dependencies.
+**Peephole Connections (LSTM Variant)**: 
 
-- In code, `keras.layers.LSTM` and `keras.layers.LSTMCell` are used to build these models. The LSTMCell provides more control, while LSTM is simpler to use for stacked layers.
+Peephole connections are a variant of LSTM architecture that allows the **gates to access the cell state directly.**
+
+This enables the gates to make more informed decisions about what information to keep or discard, improving the model's performance on tasks with long-term dependencies.
+
+In code, `keras.layers.LSTM` and `keras.layers.LSTMCell` are used to build these models. The LSTMCell provides more control, while LSTM is simpler to use for stacked layers.
   - `keras.layers.LSTM`: A high-level layer that combines the LSTM cell and recurrent logic.
   - `keras.layers.LSTMCell`: A low-level cell that can be used to build custom RNN architectures.
 
@@ -1913,8 +1941,8 @@ Using `LSTM layer` (simpler and more common):
 ```python
 model = keras.models.Sequential(
     [
-        keras.layers.LTSM(20, return_sequences=True, input_shape=(None, 1)),
-        keras.layers.LTSM(20, return_sequences=True),
+        keras.layers.LSTM(20, return_sequences=True, input_shape=(None, 1)),
+        keras.layers.LSTM(20, return_sequences=True),
         keras.layers.TimeDistributed(keras.layers.Dense(10)),
     ]
 )
@@ -1939,13 +1967,13 @@ model = keras.models.Sequential(
 ```
 
 ## GRU & Bi-LSTM
-**GRU (Gated Recurrent Unit)** is a simplified version of LSTM that combines the forget and input gates into a single update gate. Has no output gate and merges the cell state and hidden state into a single state vector.
+**GRU (Gated Recurrent Unit)** is a simplified version of LSTM that **combines the forget and input gates into a single update gate.** Has no output gate and merges the cell state and hidden state into a single state vector.
 
-  - It has fewer parameters than LSTM, making it computationally more efficient while still effectively capturing long-term dependencies in sequential data.
+It has fewer parameters than LSTM, making it **computationally more efficient** while still effectively capturing long-term dependencies in sequential data.
   
-  - Implemented in `keras.layers.GRU` and `keras.layers.GRUCell`.
+Implemented in `keras.layers.GRU` and `keras.layers.GRUCell`.
   
-**Bi-LSTM (Bidirectional LSTM)** is an extension of LSTM that processes the input sequence in both forward and backward directions. This allows the model to capture context from both past and future time steps, improving performance on tasks **where the entire sequence context is important**, such as **natural language processing** and speech recognition.
+**Bi-LSTM (Bidirectional LSTM)** is an extension of LSTM that processes the input sequence in **both forward and backward directions.** This allows the model to capture context from both past and future time steps, improving performance on tasks **where the entire sequence context is important**, such as **natural language processing** and speech recognition.
 
 **Comparison Table**:
 
@@ -1955,36 +1983,10 @@ model = keras.models.Sequential(
 | Advantages     | Better for long-term dependencies and complex sequences | Faster and less memory-intensive | Captures context from both directions |
 | Disadvantages | Slower and more memory-intensive | May not capture long-term dependencies as well | More complex and requires more resources |
 
-## Selecting Epochs (Best Practices)
-- **Early Stopping**: Monitor the validation loss during training and stop training when the validation loss starts to increase, indicating overfitting. This can be done using the `EarlyStopping` callback in Keras.
-
-``` python
-from keras.callbacks import EarlyStopping
-early_stop = EarlyStopping(
-  monitor='val_loss', # Monitor validation loss
-  patience=5, # Stops training after 5 epochs of no improvement
-  restore_best_weights=True # roll back to the best weights
-)
-
-# Fit the model with early stopping
-model.fit(
-  X_train,
-  y_train,
-  epochs=50, 
-  validation_split=0.2, # 20% of data for validation
-  batch_size=32, # Batch size for training
-  shuffle=True, # Shuffle the training data
-  verbose=1, # Print training progress
-  callbacks=[early_stop]
-)
-```
-
-- Training halts automatically when your model starts to overfit.
-
-# Letcure 12
+# Lecture 12
 
 ## Autoencoders
-Autoencoders are a type of neural network used for unsupervised learning, primarily for dimensionality reduction, feature extraction, and data denoising.
+Autoencoders are a type of neural network used for **unsupervised learning**, primarily for dimensionality reduction, feature extraction, and data denoising.
   
 Autoencoders can be thought of as a way to **compress and then decompress data**, similar to how a zip file reduces the size of files for storage and later restores them to their original form.
 
@@ -1998,19 +2000,19 @@ Autoencoders can be thought of as a way to **compress and then decompress data**
    
 4. **Extracting Features**: Autoencoders can learn useful features from the input data, which can be used for downstream tasks like classification or clustering.
 
-### Architecture
+#### Architecture
 
 An autoencoder consists of two main components:
 
-1. **Encoder**: The encoder compresses the input data into a lower-dimensional representation (latent space). It consists of one or more layers that reduce the dimensionality of the input data.
+1. **Encoder**: The encoder **compresses the input data** into a lower-dimensional representation (latent space). It consists of one or more layers that reduce the dimensionality of the input data.
    
-2. **Decoder**: The decoder reconstructs the original input data from the lower-dimensional representation. It consists of one or more layers that increase the dimensionality of the latent space back to the original input size.
+2. **Decoder**: The decoder **reconstructs the original input** data from the lower-dimensional representation. It consists of one or more layers that increase the dimensionality of the latent space back to the original input size.
 
 The encoder and decoder are typically symmetric, meaning that the architecture of the encoder mirrors that of the decoder.
 
-Autoencoders have the same architecture as MLP, but the output layer has the same number of neurons as the input layer, and the activation function is usually linear (or identity) to allow for reconstruction of the original input data.
+Autoencoders have the same architecture as MLP, but the **output layer has the same number of neurons as the input layer**, and the activation function is usually linear (or identity) to allow for reconstruction of the original input data.
 
-### Undercomplete Autoencoder
+#### Undercomplete Autoencoder
 
 An undercomplete autoencoder is a type of autoencoder where the dimensionality of the latent space is smaller than the input space. This forces the model to learn a compressed representation of the input data, which can help in feature extraction and dimensionality reduction.
 
@@ -2033,20 +2035,21 @@ X_train = np.random.rand(1000, 784)  # Example training data
 autoencoder.fit(X_train, X_train, epochs=10, batch_size=256, shuffle=True, validation_split=0.2)  # Train the model
 ```
 
-- In this example, the autoencoder is trained to reconstruct the input data (X_train) by minimizing the mean squared error (MSE) between the input and output. The encoder layer reduces the dimensionality to 32, while the decoder layer reconstructs it back to 784 dimensions.
+In this example, the autoencoder is trained to reconstruct the input data (X_train) by minimizing the mean squared error (MSE) between the input and output. The encoder layer reduces the dimensionality to 32, while the decoder layer reconstructs it back to 784 dimensions.
   
-- The model is compiled using the Adam optimizer and trained for 10 epochs with a batch size of 256. The training data is split into 80% for training and 20% for validation.
+The model is compiled using the Adam optimizer and trained for 10 epochs with a batch size of 256. The training data is split into 80% for training and 20% for validation.
   
-- The autoencoder learns to compress the input data into a lower-dimensional representation and then reconstruct it back to the original input space.
+The autoencoder learns to compress the input data into a lower-dimensional representation and then reconstruct it back to the original input space.
 
-### Stacked Autoencoders
+#### Stacked Autoencoders
 
-Stacked autoencoders (or Deep autoencoders)are a type of autoencoder architecture where multiple layers of encoders and decoders are stacked on top of each other. Each layer learns a compressed representation of the input data, allowing for deeper feature extraction and more complex representations.
+Stacked autoencoders (or Deep autoencoders) are a type of autoencoder architecture where multiple layers of encoders and decoders are stacked on top of each other. Each layer learns a compressed representation of the input data, allowing for deeper feature extraction and more complex representations.
 
 **Why Stacked layers?**
-- By stacking multiple layers, the model can learn hierarchical representations of the data, where each layer captures different levels of abstraction. This is similar to how deep neural networks learn features at different levels of granularity.
 
-Pyhton example:
+By stacking multiple layers, the model can learn hierarchical representations of the data, where each layer captures different levels of abstraction. This is similar to how deep neural networks learn features at different levels of granularity.
+
+Python example:
 ```python
 input_img = keras.Input(shape=(784,))  # Input shape (e.g., for MNIST images)
 encoded1 = layers.Dense(128, activation='relu')(input_img)  # First encoder layer
@@ -2061,25 +2064,23 @@ autoencoder.compile(optimizer='adam', loss='mse')  # Compile the model
 X_train = np.random.rand(1000, 784)  # Example training data
 autoencoder.fit(X_train, X_train, epochs=10, batch_size=256, shuffle=True, validation_split=0.2)  # Train the model
 ```
-- In this example, the autoencoder consists of two encoder layers (128 and 64 units) and two decoder layers (128 and 784 units). The model is trained to reconstruct the input data (X_train) by minimizing the mean squared error (MSE) between the input and output. The training process is similar to that of a single-layer autoencoder.
+In this example, the autoencoder consists of two encoder layers (128 and 64 units) and two decoder layers (128 and 784 units). The model is trained to reconstruct the input data (X_train) by minimizing the mean squared error (MSE) between the input and output. The training process is similar to that of a single-layer autoencoder.
   
-- The stacked autoencoder learns to compress the input data into a lower-dimensional representation (64 units) and then reconstruct it back to the original input space (784 dimensions) through multiple layers.
+The stacked autoencoder learns to compress the input data into a lower-dimensional representation (64 units) and then reconstruct it back to the original input space (784 dimensions) through multiple layers.
 
-### Convoluted Autoencoders
+#### Convolutional Autoencoders
 
-- Designed for image data, where the input is typically a 2D image (height x width x channels). They are particularly effective for tasks like image denoising, inpainting, and **unsupervised feature learning.**
+Designed for image data, where the input is typically a 2D image (height x width x channels). They are particularly effective for tasks like image denoising, inpainting, and **unsupervised feature learning.**
 
-  
--  Uses convolutional layers instead of fully connected layers in the encoder and decoder. They are particularly effective for image data, as they can learn spatial hierarchies and local patterns in the input data.
-  
+Uses convolutional layers instead of fully connected layers in the encoder and decoder. They are particularly effective for image data, as they can learn spatial hierarchies and local patterns in the input data.
 
 **Architecture**:
 
-- **Encoder:** Consists of convolutional layers that downsample the input image, reducing its spatial dimensions (heigh & width) while increasing the number of feature maps (depth). Consists of convolutional layers followed by pooling layers (e.g., max pooling) to reduce the spatial dimensions of the input image.
+**Encoder:** Consists of convolutional layers that downsample the input image, reducing its spatial dimensions (height & width) while increasing the number of feature maps (depth). Consists of convolutional layers followed by pooling layers (e.g., max pooling) to reduce the spatial dimensions of the input image.
+
+**Decoder:** Consists of **transposed convolutional layers** (also known as deconvolutional layers) that upsample the encoded representation back to the original image size. The decoder uses transposed convolutional layers (also known as deconvolutional layers) to upsample the encoded representation back to the original image size.
   
-- **Decoder:** Consists of **transposed convolutional layers** (also known as deconvolutional layers) that upsample the encoded representation back to the original image size. The decoder uses transposed convolutional layers (also known as deconvolutional layers) to upsample the encoded representation back to the original image size.
-  
-- The output layer typically uses a sigmoid activation function to produce pixel values in the range [0, 1].
+The output layer typically uses a sigmoid activation function to produce pixel values in the range [0, 1].
 
 ```python
 import numpy as np
@@ -2150,11 +2151,11 @@ plt.show()
 ```
 Code explained:
 
-- Unpacks into `x_train` (60,000 images), `x_test` (10,000 images), and ignores labels (`_`) since the autoencoder is unsupervised.
+Unpacks into `x_train` (60,000 images), `x_test` (10,000 images), and ignores labels (`_`) since the autoencoder is unsupervised.
 
-- `np.expand_dims(array, axis)` adds a dimension at `axis=-1` (last axis). Conv2D layers expect a channel dimension (e.g., 1 for grayscale, 3 for RGB). MNIST images are grayscale, so we add a single channel.
+`np.expand_dims(array, axis)` adds a dimension at `axis=-1` (last axis). Conv2D layers expect a channel dimension (e.g., 1 for grayscale, 3 for RGB). MNIST images are grayscale, so we add a single channel.
 
-- `x_train.astype("float32") / 255.0` normalizes pixel values to the range [0, 1] for better training stability. Because neural networks work better with normalize inputs and `binary_crossentropy` loss function expects values in [0, 1]. Float32 is standard for GPU computations.
+`x_train.astype("float32") / 255.0` normalizes pixel values to the range [0, 1] for better training stability. Because neural networks work better with normalize inputs and `binary_crossentropy` loss function expects values in [0, 1]. Float32 is standard for GPU computations.
 
 **Encoder**:
 
@@ -2227,8 +2228,9 @@ Code explained:
 
 - `decoded_imgs = autoencoder.predict(x_test)` reconstructs the test images using the trained autoencoder. The output is a set of reconstructed images.
 
-### CAE vs CNN
-- **When to not use an autoencoder:**
+## CAE vs CNN
+**When to not use an autoencoder:**
+
   - When the data is not suitable for unsupervised learning, such as when labeled data is available for supervised learning tasks.
   - When the model complexity is not justified by the amount of data available, as autoencoders can be prone to overfitting if the dataset is small.
   - When the task requires a specific architecture or model type that is not well-suited for autoencoders, such as certain types of time series analysis or structured data.
@@ -2239,7 +2241,7 @@ In short:
 
 - Use **just CNN** if you have lots of clean labeled data and want simplicity.
 
-### Recurrent Autoencoders
+#### Recurrent Autoencoders
 
 Recurrent autoencoders are a type of autoencoder designed to work with **sequential data**, such as time series or natural language. They combine the principles of autoencoders and recurrent neural networks (RNNs) to learn compressed representations of sequences.
 
@@ -2249,9 +2251,9 @@ Recurrent autoencoders are a type of autoencoder designed to work with **sequent
   
 - **Decoder**: The decoder is also an RNN that takes the latent representation and reconstructs the original sequence. It generates the output sequence step by step, using the latent representation as context.
 
-### Denoising Autoencoders
+#### Denoising Autoencoders
 
-Denoising autoencoders are a type of autoencoder designed to learn robust representations of data by reconstructing the original input from a corrupted version of it. 
+Denoising autoencoders are a type of autoencoder designed to learn robust representations of data by reconstructing the original input from a **corrupted version of it.**
 
 They are particularly **useful for tasks like image denoising**, where the goal is to remove noise from images while preserving important features.
 
@@ -2277,6 +2279,7 @@ They are particularly **useful for tasks like image denoising**, where the goal 
 A hyperparameter is a parameter whose value is set before the learning process begins. Hyperparameters are not learned from the data but are instead specified by the practitioner to control the learning process.
 
 They are settings that govern the training of the model and can significantly impact its performance. Examples of hyperparameters include:
+
 - **Learning rate**: The step size used in the optimization algorithm to update the model's parameters.
 
 - **Batch size**: The number of training samples used in one iteration of the optimization algorithm.
@@ -2303,7 +2306,7 @@ Manual tuning becomes impractical for complex models with many hyperparameters.
 
 **Validation Set**: A separate portion of data is used to evaluate hyperparameter performance, preventing overfitting to training data.
 
-### Challenges in HPO
+#### Challenges in HPO
 
 **Computational Challenges**
 
@@ -2323,7 +2326,7 @@ Manual tuning becomes impractical for complex models with many hyperparameters.
   - Hyperparameter tuning can lead to overfitting if the validation set is not representative of the test set.
   - Care must be taken to ensure that the model generalizes well to unseen data. 
 
-### Table of Hyperprameters (HPs)
+#### Table of Hyperprameters (HPs)
 
 | ML Algorithm | Main HPs | Optional HPs |
 |--------------|----------|--------------|
@@ -2341,7 +2344,7 @@ Manual tuning becomes impractical for complex models with many hyperparameters.
 | LSTM | Number of units, Learning rate, Batch size | Dropout rate, Number of layers |
 | PCA | n_components | whiten, svd_solver |
 
-### Parameter Initialization
+#### Parameter Initialization
 
 Parameter initialization is crucial to NN performance
 
@@ -2363,7 +2366,7 @@ Weight initialization is important because it determines the starting point of t
 - **He Initialization**: Similar to Xavier initialization but designed for ReLU activation functions. It scales the weights based on the number of input units, helping to prevent vanishing/exploding gradients. `tf.keras.initializers.HeNormal()` is used for He initialization.
 
 
-### Learning Rate Strategies
+#### Learning Rate Strategies
 
 The learning rate determines the step size during optimization:
    - Too high: Model may diverge
@@ -2392,7 +2395,7 @@ To find an optimal learning rate:
   
 3. Reinitialize the model and train it with the selected learning rate.
 
-### Common Scheduling Techniques
+#### Common Scheduling Techniques
 
 Strategies to reduce learning rate during training called learning schedules.
 
@@ -2410,7 +2413,7 @@ Strategies to reduce learning rate during training called learning schedules.
 
 **Performance-based Scheduling (Most Common)**:
 
-- Reduces the learning rate based on the performance of the model on the validation set. This is useful for models that require dynamic adjustments to the learning rate based on performance.
+Reduces the learning rate based on the performance of the model on the validation set. This is useful for models that require dynamic adjustments to the learning rate based on performance.
   - Measure validation error after each epoch and reduce the learning rate if the error does not improve for a certain number of epochs.
   - Reduce the learning rate by a factor of x if the validation error does not improve for 5 epochs.
 
@@ -2429,7 +2432,7 @@ lr_scheduler = ReduceLROnPlateau(
 model.fit(x_train, y_train, epochs=50, callbacks=[lr_scheduler], validation_data=(x_val, y_val))
 ```
 
-## HPO Search Strategies
+#### HPO Search Strategies
 
 **Trial and Error (Grad Student Descent)**:
 
@@ -2530,7 +2533,7 @@ print("Test Accuracy:", accuracy)
 - **Problem:** May get stuck in local optima and is not suitable for discrete or categorical hyperparameters.
 - `sklearn.model_selection.BayesSearchCV` is used for gradient-based optimization.
 
-## HPO Frameworks
+#### HPO Frameworks
 
 **Sklearn**:
 
@@ -2551,11 +2554,11 @@ print("Test Accuracy:", accuracy)
 
 Convolutional Neural Networks (CNNs) are a type of deep learning model specifically designed for processing grid-like data, such as images.
 
+It’s efficient at recognizing spatial patterns using **fewer parameters than traditional fully connected neural networks.**
+
 They are widely used in computer vision tasks, including image classification, object detection, and image segmentation.
 
-Traditional machine learning techniques and simple neural networks often struggle when it comes to working with large, high-dimensional images.
-
- - This is because the input data (e.g., pixels in an image) is vast, and feeding this directly into a fully connected neural network would require an enormous number of parameters, making the process computationally expensive and inefficient.
+Traditional machine learning techniques and simple neural networks often struggle when it comes to working with large, high-dimensional images. This is because the input data (e.g., pixels in an image) is vast, and feeding this directly into a fully connected neural network would require an enormous number of parameters, making the process computationally expensive and inefficient.
    - A 32x32 pixel image with 3 color channels (RGB) would have 32 * 32 * 3 = 3072 input features.
    - A fully connected layer with 1000 neurons would require 3072 * 1000 = 3,072,000 parameters just for the first layer.
    - This is not feasible for larger images or deeper networks.
@@ -2573,10 +2576,7 @@ CNNs overcome these challenges by **using partial connections and shared weights
 | Spatial Hierarchy | Captures spatial hierarchies and local patterns | Does not capture spatial hierarchies |
 
 
-- CNNs Layers are designed to process grid-like data. They include convolutional layers
-that apply filters (kernels) to the input data to detect features like edges, textures, and patterns.
-
-  -**A Filter** is a small matrix (e.g., 3x3 or 5x5) that slides over the input data, performing element-wise multiplication and summation to produce a feature map.
+**Convolution:** when a filter (which is a small matrix (e.g., 3x3 or 5x5)) slides over the input data, performing **element-wise multiplication** and summation to **produce a feature map** (a new representation of the input image that highlights the detected features). The same filter is applied across the entire input, allowing the model to learn spatial hierarchies and local patterns.
 
 CNNs learn increasingly complex patterns layer by layer:
 
@@ -2586,33 +2586,13 @@ CNNs learn increasingly complex patterns layer by layer:
 
   - Deeper layers recognize high-level concepts (e.g., faces, cars, tumors).
 
-
-**DNNs** are composed of fully connected layers that connect every neuron in one layer to every neuron in the next layer. They do not have the same level of spatial awareness as CNNs and are **less efficient for processing images.**
-
-**CNN Key Concepts**
-
-**What is convolution?**
-
-- Convolution is a mathematical operation that combines two functions to produce a third function. In the context of CNNs, it involves applying a filter (kernel) to an input image to extract features.
-
-- The convolution operation involves sliding the filter (a small matrix (e.g., 3x3 or 5x5)) over the input image and performing element-wise multiplication and summation to produce a feature map (a new representation of the input image that highlights the detected features).
-
-- **Grayscale** consists of a single channel with 0 representing the black areas and 255 the
-white regions with the values in between for various shades of Gray
-
-#### Weight Sharing and Partially Connected Layers
-
-**Problem:** In a standard fully connected layer, each neuron is connected to pixel in the input image, leading to a large number of parameters which is computationally expensive and inefficient.
-
-**Solution:** CNNs use weight sharing and partially connected layers to reduce the number of parameters and improve computational efficiency.
-
 **Weight Sharing**: 
 
-- The same filter (kernel) (which is the same set of weights) is applied to different regions of the input image, allowing the model to learn spatial hierarchies and local patterns. This reduces the number of parameters significantly.
+The same filter (kernel) (which is the same set of weights) is applied to different regions of the input image, allowing the model to learn spatial hierarchies and local patterns. This reduces the number of parameters significantly.
 
-- For example, if a filter has a size of (3, 3) and the input image has a size of 32 x 32 pixels with 3 input channels and 32 output channels (where each output channel corresponds to a different feature map), the number of weights for the filter is (3 x 3 x 3 x 32) = 864 weights. If the input image has 32 x 32 pixels and 3 input channels, the number of weights in a fully connected layer would be (32 x 32 x 3) x (32 x 32 x 3) = 3072 x 3072 = 9,437,184 weights.
+For example, if a filter has a size of (3, 3) and the input image has a size of 32 x 32 pixels with 3 input channels and 32 output channels (where each output channel corresponds to a different feature map), the number of weights for the filter is (3 x 3 x 3 x 32) = 864 weights. If the input image has 32 x 32 pixels and 3 input channels, the number of weights in a fully connected layer would be (32 x 32 x 3) x (32 x 32 x 3) = 3072 x 3072 = 9,437,184 weights.
 
-- This approach allows the network to recognize patterns (e.g., edges) regardless of their location in the image (known as **translation invariance**). This means that if an object appears in different locations in the image, the CNN can still recognize it.
+This approach allows the network to recognize patterns (e.g., edges) regardless of their location in the image (known as **translation invariance**). This means that if an object appears in different locations in the image, the CNN can still recognize it.
 
 
 **Partially Connected Layers**: 
@@ -2625,35 +2605,29 @@ This limits connections to local regions, reducing computation and capturing loc
 
 ## Components of CNNs
 
-### Input Layer
+#### Input Layer
 
-- The input layer of a CNN is the first layer that receives the input data (e.g., an image). It is responsible for passing the input data to the subsequent layers of the network.
+Takes image input: shape = (height, width, channels)
 
-- For images the input is a tensor of shape `(batch_size, height, width, channels)`, where `batch_size` is the number of images in a batch, `height` and `width` are the dimensions of the image, and `channels` is the number of color channels (e.g., 1 for grayscale, 3 for RGB).
+For images the input is a tensor of shape `(batch_size, height, width, channels)`, where:
+  -  `batch_size` is the number of images in a batch, 
+  -  `height` and `width` are the dimensions of the image
+  -  `channels` is the number of color channels (e.g., 1 for grayscale, 3 for RGB).
 
-- In python the input layer is defined using `tf.keras.layers.Input(shape=(height, width, channels))`, where `shape` specifies the dimensions of the input data.
+In python the input layer is defined using `tf.keras.layers.Input(shape=(height, width, channels))`, where `shape` specifies the dimensions of the input data.
 
-### Convolutional Layer
-- The core building block of CNNs, responsible for feature extraction.
-  
-- Applies a set of learnable filters (kernels) to the input data, producing feature maps that highlight important patterns.
+#### Convolutional Layer
+Applies filters (kernels) to the input data, producing feature maps to extract features
 
-- The filter (a small matrix) is passed over the input image, performing element-wise multiplication and summation to produce a single value in the output feature map, in a process called convolution.
-
-- Colored images have 3 channels (RGB), so the filter must also have 3 channels. The filter is applied to each channel separately, and the results are summed to produce a single value in the output feature map. For example, a `(3, 3, 3)` filter for a colored image and for a greyscale image a `(3, 3, 1)` filter, where **(height, width, channels) are the dimensions of the filter.**
-
-- **Feature Maps**: The output of the convolutional layer is a set of feature maps, each corresponding to a different filter. Each feature map highlights different patterns in the input data (such as edges, textures, or shapes).
+The filter (a small matrix) is passed over the input image, performing element-wise multiplication and summation to produce a single value in the output feature map, in a process called convolution.
+  - **Feature Maps**: The output of the convolutional layer is a set of feature maps, each corresponding to a different filter. Each feature map highlights different patterns in the input data (such as edges, textures, or shapes).
   - X number of filters = X number of feature maps
+  - **Stride**: The number of pixels the filter moves over the input image during convolution. A stride of 1 means the filter moves one pixel at a time. Increasing the stride reduces the size of the output feature map.
+  - **Padding**: The process of adding extra pixels around the input image to control the size of the output feature map. There are two types of padding:
+    - **Valid Padding**: No padding is added, and the output feature map is smaller than the input image.
+    - **Same Padding**: Padding is added to ensure that the output feature map has the same dimensions as the input image.
 
-- **Stride**: The number of pixels the filter moves over the input image during convolution. A stride of 1 means the filter moves one pixel at a time, while a stride of 2 means it moves two pixels at a time. Increasing the stride reduces the size of the output feature map.
-
-- **Padding**: The process of adding extra pixels around the input image to control the size of the output feature map. There are two types of padding:
-  
-  - **Valid Padding**: No padding is added, and the output feature map is smaller than the input image.
-  
-  - **Same Padding**: Padding is added to ensure that the output feature map has the same dimensions as the input image.
-
-- Conv2D layer is defined using `tf.keras.layers.Conv2D(filters, kernel_size, strides=(1, 1), padding='valid', activation=None)`, where:
+Conv2D layer is defined using `tf.keras.layers.Conv2D(filters, kernel_size, strides=(1, 1), padding='valid', activation=None)`, where:
   - `filters` is the number of filters (feature maps) to learn.
   - `kernel_size` is the size of the filter (e.g., `(3, 3)`).
   - `strides` is the stride of the convolution (default is `(1, 1)`).
@@ -2662,17 +2636,17 @@ This limits connections to local regions, reducing computation and capturing loc
     -  **ReLU (Rectified Linear Unit):** Commonly used in CNNs to introduce non-linearity, helping the model learn more complex patterns.
     -  **Softmax:** Used in the output layer for multi-class classification tasks, producing probabilities for each class.
 
-### Pooling Layer
+#### Pooling Layer
 
 Used to reduce the spatial dimensions (height and width) of the image while retaining important features.
 
-Downsamples feature maps by summarizing regions (e.g., taking the maximum value in a 3x3 window).
+**Downsamples feature maps** by summarizing regions (e.g., taking the maximum value in a 3x3 window).
 
 This is especially useful in CNNs because it reduces computational complexity and helps prevent overfitting.
 
 **Types**: Max pooling (selects max), average pooling (computes average).
 
-#### Max Pooling (Most Common)
+##### Max Pooling (Most Common)
 
 In max pooling, a filter (usually 2x2) slides over the image, and for each region, it selects the maximum value. This reduces the spatial dimensions of the image but retains the most important features.
 
@@ -2686,9 +2660,28 @@ In python, max pooling is defined using:
 
 eg. it reduces spacial dimensions by a factor of 2, so a 32x32 image becomes a 16x16 image.
 
-### Fully Connected Layer (Dense Layer)
+##### Average Pooling
+In average pooling, a filter (usually 2x2) slides over the image, and for each region, it computes the average value. This also reduces the spatial dimensions of the image but retains more information than max pooling.
 
-The Fully Connected Layer (Dense Layer) is where the network makes final decisions. After several convolutions and pooling operations, the network has learned abstract features of the image. These features are passed to a fully connected layer for classification.
+When to use Max pooling vs Average pooling:
+
+- **Max Pooling**: Preferred when the goal is to retain the most prominent features in the image, such as edges or textures. It is commonly used in CNNs for image classification tasks.
+- **Average Pooling**: Preferred when the goal is to retain more information about the overall structure of the image, such as in tasks like semantic segmentation or when the input data is noisy.
+
+#### Flattening Layer
+Converts 2D feature maps into 1D vector to prepare for fully connected layers.
+
+The flattening layer reshapes the output of the last pooling layer into a 1D vector, which can then be passed to fully connected layers for classification or regression tasks.
+
+This is done using `tf.keras.layers.Flatten()`, which reshapes the input tensor into a 1D vector.
+
+For example, if the output of the last pooling layer is (None, 4, 4, 128), flattening it will result in a shape of (None, 2048) as 4x4x128 = 2048.
+
+#### Fully Connected Layer (Dense Layer)
+
+The Fully Connected Layer (Dense Layer) is where the network makes final decisions.
+
+ After several convolutions and pooling operations, the network has learned abstract features of the image. These features are passed to a fully connected layer for classification.
 
 After feature extraction through convolution and pooling, the flattened feature map is passed to a fully connected layer. This layer uses learned weights and biases to compute a final output, such as a classification label.
 
@@ -2698,16 +2691,9 @@ After feature extraction through convolution and pooling, the flattened feature 
 
 - **Output:** (batch size, units), e.g., (None, 128) for latent_dim=128.
 
-- **Flattening**: The output of the last pooling layer is flattened into a 1D vector before being passed to the fully connected layer. This is done using `tf.keras.layers.Flatten()`, which reshapes the input tensor into a 1D vector.
-  
-  - For example, if the output of the last pooling layer is (None, 4, 4, 128), flattening it will result in a shape of (None, 2048) as 4x4x128 = 2048.
-
 ## CNN Optimization and Techniques
 
 **Dropout**: 
-
-CNNs are prone to overfitting, meaning they perform well on training data but poorly on unseen data. Dropout is a technique where some neurons are randomly ignored during training, forcing the network to learn more generalized patterns.
-
 A regularization technique that randomly sets a fraction of the input units to 0 during training to prevent overfitting. This forces the network to learn more robust features.
 
 - `tf.keras.layers.Dropout(rate)` is used to create a dropout layer, where:
@@ -2807,15 +2793,15 @@ model.fit(datagen.flow(x_train, y_train, batch_size=128), epochs=10, validation_
 
 Training a CNN involves two key steps: forward propagation (where the network makes predictions) and backpropagation (where it learns from its mistakes).
 
-### Forward Propagation
+#### Forward Propagation
 - Each layer applies transformations to the input (convolution, activation, pooling).
 - Features are extracted progressively.
 - Fully connected layers use these features to make predictions
-- The output is compared to the true labels using a loss function (e.g., categorical crossentropy for multi-class classification or binary crossentropy for binary classification).
+- The output is compared to the true labels using a loss function (e.g., **categorical crossentropy for multi-class classification** or **binary crossentropy for binary classification**).
 - The loss function quantifies the difference between the predicted output and the true labels.
 - The loss is used to update the model's weights during backpropagation.
 
-### Backpropagation
+#### Backpropagation
 - Gradients are computed using the chain rule
 - The gradients are used to update the model's weights using an optimization algorithm (e.g., stochastic gradient descent (SGD), Adam).
 - The optimizer adjusts the weights to minimize the loss function.
@@ -2823,7 +2809,13 @@ Training a CNN involves two key steps: forward propagation (where the network ma
 - The model is trained for a specified number of epochs, where each epoch consists of multiple iterations over the training data (batches).
 - The training process involves feeding batches of data through the network, computing the loss, and updating the weights using backpropagation.
 
-## Real World Applications of CNNs
+**Adam Optimizer**: 
+A type of SGD that adapts the learning rate for each parameter based on the first and second moments of the gradients. It combines the benefits of AdaGrad and RMSProp, making it effective for training deep neural networks.
+
+Uses adaptive learning rates + momentum (tracks past gradients).
+
+
+#### Real World Applications of CNNs
 
 - **Image Classification**: Classifying images into predefined categories (e.g., identifying objects in images).
 - **Object Detection**: Locating and classifying multiple objects within an image (e.g., detecting faces in photos).
@@ -2857,7 +2849,7 @@ Two types of attacks in DL: White-Box and Black-Box attacks
 - **Black-Box Attacks**: The attacker has no knowledge of the model architecture or parameters. They can only query the model to obtain predictions. This makes it more challenging to create adversarial examples, but it is still possible using techniques like transferability (where adversarial examples generated for one model can also fool another model).
 
 
-### Generating Adversarial Examples
+#### Generating Adversarial Examples
 
 Several methods exist to craft adversarial examples, including:
 
@@ -2887,7 +2879,7 @@ GANs consist of two competing neural networks:
 
 The two networks are trained adversially: the generator improves by trying to “fool” the discriminator, while the discriminator improves by better distinguishing real from fake.
 
-### Training a GAN
+#### Training a GAN
 
 Training involves two phases per iteration:
 
@@ -2913,9 +2905,9 @@ Challenges include:
 
 Federated Learning is a distributed machine learning approach that allows multiple devices or servers to **collaboratively train a model without sharing their raw data.**
 
-Instead of sending data to a central server, each device trains the model locally and only shares the model updates (gradients) with the server. 
+Instead of sending data to a central server, each device trains the model locally and only **shares the model updates (gradients)** with the server. 
 
-This approach enhances privacy, reduces data transfer costs, and enables training on decentralized data sources.
+This approach **enhances privacy**, **reduces data transfer costs**, and **enables training on decentralized data sources**.
 
 **How Does FL Work?**
 
@@ -2939,7 +2931,7 @@ This approach enhances privacy, reduces data transfer costs, and enables trainin
 
 Transfer Learning is a machine learning technique where a model developed for one task is reused as the starting point for a model on a second task. It is particularly useful when the second task has limited labeled data.
 
-Involves fine-tuning a model pre-trained on one task for a new, related task, offering time and cost savings.
+Involves **fine-tuning a model pre-trained on one task for a new, related task**, offering time and cost savings.
 
 **Why Use Transfer Learning?**
 
@@ -2949,7 +2941,7 @@ Involves fine-tuning a model pre-trained on one task for a new, related task, of
 
 - **Improved Performance**: Transfer learning often leads to better performance on the target task, as the model starts with a good set of features learned from the source task.
 
-### TL Strategies
+#### TL Strategies
 
 1. **Transductive Transfer Learning:**
    
@@ -3060,7 +3052,7 @@ Reinforcement Learning (RL) is a type of machine learning where an agent learns 
 - No need for data collection, preprocessing, or labeling prior to training.
 - Can autonomously learn behaviors with the right incentives (positive rewards or negative punishments).
 
-### RL Workflow
+#### RL Workflow
 
 - Environment: The external system with which the agent interacts.
 - Reward definition: The feedback signal received by the agent after taking an action.
@@ -3084,7 +3076,7 @@ Reinforcement Learning (RL) is a type of machine learning where an agent learns 
   - Uses the model to plan actions and improve learning efficiency.
   - Example: AlphaZero, which combines deep learning with Monte Carlo Tree Search (MCTS).
 
-### RL Examples
+#### RL Examples
 
 Example 1: Car Parking
 
@@ -3098,9 +3090,9 @@ Example 1: Car Parking
 
 **Challenges:** Sample inefficiency, interpretability, and environment constraints remain hurdles.
 
-## Explainable Artifical Intelligense (XAI)
+## Explainable Artificial Intelligence (XAI)
 
-Explainable Artificial Intelligence (XAI) refers to methods and techniques that make the decisions and predictions of AI models more understandable and interpretable to humans.
+Explainable Artificial Intelligence (XAI) refers to methods and techniques that make the decisions and predictions of AI models more **understandable and interpretable to humans**.
 
 **Goal of XAI** is to produce more explainable models while maintaining high
 prediction accuracy, enabling humans to understand, trust, and manage AI
@@ -3118,9 +3110,9 @@ Rising ethical concerns around AI necessitate transparency.
 
 **Explainability vs. Interpretability**
 
-- **Explainability**: The ability to explain the model's predictions and decisions in a human-understandable way. (focus on process)
-  
-- **Interpretability**: The degree to which a human can understand the cause of a decision made by a model. (focus on outcome)
+- **Explainability**: The ability to explain the model's predictions and decisions in a human-understandable way. (**focus on process**)
+
+- **Interpretability**: The degree to which a human can understand the cause of a decision made by a model. (**focus on outcome**)
 
 **XAI Challenges**
 - **Complexity:** Balancing explanation with model accuracy.
@@ -3128,7 +3120,7 @@ Rising ethical concerns around AI necessitate transparency.
 - **Terminology:** Lack of standardized definitions for explainability and interpretability.
 - **Development:** Requires integrating XAI into existing AI workflows.
 
-Libraies like `LIME` (Local Interpretable Model-agnostic Explanations) and `SHAP` (SHapley Additive exPlanations) provide tools for generating explanations for model predictions.
+Libraries like `LIME` (Local Interpretable Model-agnostic Explanations) and `SHAP` (SHapley Additive exPlanations) provide tools for generating explanations for model predictions.
 
 # Lecture 15
 
@@ -3153,7 +3145,7 @@ Responsible AI (RAI) refers to the ethical and accountable development, deployme
 - **Inclusivity:** Ensuring diverse perspectives are considered in AI development and deployment
 
 
-**RICE** is a framework for evaluating the ethical implications of AI systems. It emphasizes the importance of considering the broader societal impact of AI technologies and ensuring that they are developed and used in ways that align with ethical principles and societal values.
+**RICE** is a framework for **evaluating the ethical implications of AI systems**. It emphasizes the importance of considering the broader societal impact of AI technologies and ensuring that they are developed and used in ways that align with ethical principles and societal values.
 
 **RICE**
 - **R**esponsible
@@ -3162,7 +3154,7 @@ Responsible AI (RAI) refers to the ethical and accountable development, deployme
 - **E**thical
 
 
-### AI Alignment
+## AI Alignment
 
 **Goal:** to enable enterprises to tailor AI models to follow their business rules
 and policies. Alignment happens during fine-tuning, involving instruction-tuning and a critique
